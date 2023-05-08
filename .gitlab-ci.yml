@@ -12,10 +12,10 @@ stages:
   - build
   - test
 
-  script:
+  script: &build_definition
     - apt-get update -y
     - apt-get install -y git libunwind8 libsnappy1v5 liblzo2-2 liblz4-1 libzstd1
-    - git clone --branch master https://github.com/apache/spark.git
+    - git clone --branch master https://github.com/Ewelinahol/spark-cicd.git
     - cd spark
     - java -version
     - build/mvn ${MAVEN_CLI_OPTS} -DskipTests -P$SCALA_VERSION clean package
