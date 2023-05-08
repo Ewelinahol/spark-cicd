@@ -1,0 +1,41 @@
+image: openjdk:11
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+cache:
+  paths:
+    - .m2/repository/
+
+stages:
+  - build
+  - test
+
+  script:
+    - apt-get update -y
+    - apt-get install -y git libunwind8 libsnappy1v5 liblzo2-2 liblz4-1 libzstd1
+    - git clone --branch master https://github.com/apache/spark.git
+    - cd spark
+    - java -version
+    - build/mvn ${MAVEN_CLI_OPTS} -DskipTests -P$SCALA_VERSION clean package
+    
+.test_template: &test_definition
+  script:
+    - cd spark
+    - java -version
+    - build/mvn ${MAVEN_CLI_OPTS} test -DwildcardSuites=none -Dtest=org.apache.spark.streaming.JavaAPISuite test
+
+2.13_Scala_with_Java_11_build:
+  stage: build
+  variables:
+    SCALA_VERSION: '2.13'
+  <<: *build_definition
+
+2.13_Scala_with_Java_11_test:
+  stage: test
+  variables:
+    SCALA_VERSION: '2.13'
+  needs:
+    - 2.13_Scala_with_Java_11_build
+  <<: *test_definition
